@@ -1,11 +1,12 @@
 import cv2
 import numpy as np
 import random
+import sys
 
 #Dimencoes de acordo com o detran, 40x13(cm), aspecto = 40/13 = 3,07
 def verifySize(contour):
    error = 0.4
-   aspect = 4.7769
+   aspect = 4.0769
    min = 15*aspect*15
    max = 125*aspect*125
    rmin = aspect-aspect*error
@@ -29,7 +30,7 @@ def verifySize(contour):
    return True
 
 def main():
-   img = cv2.imread('resources/plates/placa6.jpg')
+   img = cv2.imread(sys.argv[1])
    imgSize = img.shape[:2]
 
    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -72,11 +73,11 @@ def main():
 
       for i in range(0,numSeeds):
          seed   = {}
-         seed['x'] = center_x+(random.randrange(-1000,1000) % int(minSize)-(minSize/2));
-         seed['y'] = center_y+(random.randrange(1,1000) % int(minSize))-(minSize/2);
+         seed['x'] = center_x+(random.randrange(-500,1000) % int(minSize+10));
+         seed['y'] = center_y+(random.randrange(-500,1000) % int(minSize-10));
          cv2.circle(result, (int(seed['x']),int(seed['y'])), 1, (255,255,0), -1);
          area,fill_rect = cv2.floodFill(img, mask, (int(seed['x']),int(seed['y'])), (255,0,0), (loDiff, loDiff, loDiff), (upDiff, upDiff, upDiff), flags);
-      
+         cv2.imshow('result',result)   
       #Pega os pontos de interesse na mascara
       pointsOfInterest = []
 #      for point in mask:
