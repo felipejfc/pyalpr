@@ -69,8 +69,8 @@ def extractPlates(img):
 		minSize = w if w < h else h;
 		minSize = minSize-minSize*0.5;
 
-		loDiff = 35;
-		upDiff = 35;
+		loDiff = 30;
+		upDiff = 30;
 		connectivity = 4;
 		newMaskVal = 255;
 		numSeeds = 10;
