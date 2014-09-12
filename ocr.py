@@ -1,10 +1,25 @@
 import cv2
 import numpy as np
 
+#VERTICAL  0
+#HORIZONAL 1
+
 class Char:
 	def __init__(self, img, x):
 		self.img = img
 		self.x = x
+
+
+def projectHistogram(img, orientation):
+	h,w = img.shape[:2]
+	sz = h if orientation else w
+	mhist = np.zeros((1, sz), np.float32)
+	for i in range(0, sz):
+		data = img[:][i] if orientation else img[i][:]
+		mhist[i] = cv2.countNonZero(data)
+
+	minVal,maxVal,minLoc, maxLoc = cv2.minMaxLoc(mhist)
+
 
 
 #Aproximated aspect for characters on the plate will be 1.0, we will use 35 percent error margin
