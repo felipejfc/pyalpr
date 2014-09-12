@@ -1,24 +1,46 @@
 import cv2
 import numpy as np
 
-#VERTICAL  0
-#HORIZONAL 1
-
 class Char:
 	def __init__(self, img, x):
 		self.img = img
 		self.x = x
 
 
-def projectHistogram(img, orientation):
-	h,w = img.shape[:2]
-	sz = h if orientation else w
-	mhist = np.zeros((1, sz), np.float32)
-	for i in range(0, sz):
-		data = img[:][i] if orientation else img[i][:]
-		mhist[i] = cv2.countNonZero(data)
+#def projectHistogram(img, orientation):
+#	h,w = img.shape[:2]
+#	sz = h if orientation else w
+#	mHist = np.zeros((1, sz), np.float32)
+#	for i in range(0, sz):
+#		data = img[:][i] if orientation else img[i][:]
+#		mHist[i] = cv2.countNonZero(data)
+#
+#	minVal,maxVal,minLoc, maxLoc = cv2.minMaxLoc(mhist)
+#	if maxVal > 0:
+#		mHist *= 1.0/maxVal
+#
+#	return mHist
+#
+#def features(in, sizeData):
+#	VERTICAL  = 0
+#	HORIZONAL = 1
+#	vHist = projectHistogram(in, VERTICAL)
+#	hHist = projectHistogram(in, HORIZONAL)
+#	hV,wV = vHist.shape[:2]
+#	hH,wH = hHist.shape[:2]
+#	lowData = cv2.resize(in, (sizeData))
+#	hL,wL = lowData.shape[:2]
+#	numCols=wV+wH+wL*wL;
+#	out = np.zeros((1, numCols), np.float32)
+#	j = 0
+#	for i in range (0, wV):
+#		out[j] = vHist[i]
+#		j+=1
+#	for i in range(0, wH):
+#		out[j] = hHist[i]
+#		j+=1
+#	for i in range(0, wL):
 
-	minVal,maxVal,minLoc, maxLoc = cv2.minMaxLoc(mhist)
 
 
 
