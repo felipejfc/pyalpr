@@ -15,7 +15,7 @@ def main():
 			cv2.imshow('plate '+str(plate_id), plate)
 			chars = ocr.segment(plate)
 			for char in chars:
-				cv2.imshow('x: '+str(char.x),char.img)
+				cv2.imwrite('out/x'+str(char.x)+'.jpg',char.img)
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
 	else:
