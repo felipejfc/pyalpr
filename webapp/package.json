@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/felipejfc/pyalpr/issues"
   },
-  "homepage": "https://github.com/felipejfc/pyalpr"
+  "homepage": "https://github.com/felipejfc/pyalpr",
+  "dependencies": {
+    "express": "4.x",
+    "jade": "^1.6.0"
+  }
 }

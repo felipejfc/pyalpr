@@ -3,6 +3,7 @@ import numpy as np
 import random
 import sys
 import plate_extraction as pe
+import ocr
 
 def main():
 	img = cv2.imread(sys.argv[1])
@@ -12,6 +13,9 @@ def main():
 		for plate in plates:
 			plate_id+=1
 			cv2.imshow('plate '+str(plate_id), plate)
+			chars = ocr.segment(plate)
+			for char in chars:
+				cv2.imshow('x: '+str(char.x),char.img)
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
 	else:

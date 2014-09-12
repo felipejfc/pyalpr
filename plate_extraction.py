@@ -60,6 +60,7 @@ def extractPlates(img):
 	rects = contours
 	result = img.copy()
 	cv2.drawContours(result, contours, -1, (255,0,0),1)
+#	cv2.imshow('result',result)
 
 	#floodfill
 	for rect in rects:
@@ -83,7 +84,7 @@ def extractPlates(img):
 			seed['y'] = center_y+(random.randrange(-10000,10000) % int(h/2.5));
 			cv2.circle(result, (int(seed['x']),int(seed['y'])), 1, (255,255,0), -1);
 			area,fill_rect = cv2.floodFill(img, mask, (int(seed['x']),int(seed['y'])), (255,0,0), (loDiff, loDiff, loDiff), (upDiff, upDiff, upDiff), flags);
-			#cv2.imshow('result',result)
+		#cv2.imshow('result',result)
 
 		#Pega os pontos brancos encontrados na mascara para depois fazer o minAreaRect que contem esses pontos
 		pointsOfInterest = []
@@ -102,6 +103,8 @@ def extractPlates(img):
 		maskW, maskH = minRect[1][0], minRect[1][1]
 		maskRotation = minRect[2]
 		maskCenter = minRect[0]
+		#cv2.imshow('result',mask)
+
 		#Verifica se o tamanho dessa mascara eh compativel com o aspecto de uma placa de transito
 		#Com a segmentacao acabada, fazer crop da regiao de imagem, redimensionar ela e equalizar a luz
 		if verifyMaskAspect(maskW,maskH):
