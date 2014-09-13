@@ -16,6 +16,8 @@ def main():
 			chars = ocr.segment(plate)
 			for char in chars:
 				cv2.imshow('x: '+str(char.x),char.img)
+				print(str(char.x))
+				ocr.features(char.img,(10,10))
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
 	else:

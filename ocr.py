@@ -6,43 +6,54 @@ class Char:
 		self.img = img
 		self.x = x
 
+def projectHistogram(img, orientation):
+	h,w = img.shape[:2]
+	sz = h if orientation==1 else w
+	mHist = np.zeros((1, sz), np.float32)
+	for i in range(0, sz):
+		data = img[:][i] if orientation else img[i][:]
+		mHist[0][i] = cv2.countNonZero(data)
 
-#def projectHistogram(img, orientation):
-#	h,w = img.shape[:2]
-#	sz = h if orientation else w
-#	mHist = np.zeros((1, sz), np.float32)
-#	for i in range(0, sz):
-#		data = img[:][i] if orientation else img[i][:]
-#		mHist[i] = cv2.countNonZero(data)
-#
-#	minVal,maxVal,minLoc, maxLoc = cv2.minMaxLoc(mhist)
-#	if maxVal > 0:
-#		mHist *= 1.0/maxVal
-#
-#	return mHist
-#
-#def features(in, sizeData):
-#	VERTICAL  = 0
-#	HORIZONAL = 1
-#	vHist = projectHistogram(in, VERTICAL)
-#	hHist = projectHistogram(in, HORIZONAL)
-#	hV,wV = vHist.shape[:2]
-#	hH,wH = hHist.shape[:2]
-#	lowData = cv2.resize(in, (sizeData))
-#	hL,wL = lowData.shape[:2]
-#	numCols=wV+wH+wL*wL;
-#	out = np.zeros((1, numCols), np.float32)
-#	j = 0
-#	for i in range (0, wV):
-#		out[j] = vHist[i]
-#		j+=1
-#	for i in range(0, wH):
-#		out[j] = hHist[i]
-#		j+=1
-#	for i in range(0, wL):
+	minVal,maxVal,minLoc, maxLoc = cv2.minMaxLoc(mHist)
+	if maxVal > 0:
+		mHist *= 1.0/maxVal
+#	print mHist
+	return mHist
+
+def train:
+	chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 
+     		 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
+			 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
+	numTrainChars = [1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 
+					 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 
+					 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1]
 
 
-
+def features(img, sizeData):
+	VERTICAL  = 0
+	HORIZONAL = 1
+	vHist = projectHistogram(img, VERTICAL)
+	hHist = projectHistogram(img, HORIZONAL)
+	hV,wV = vHist.shape[:2]
+	hH,wH = hHist.shape[:2]
+	lowData = cv2.resize(img, (sizeData))
+	hL,wL = lowData.shape[:2]
+	numCols=wV+wH+wL*wL;
+	out = np.zeros((1,numCols), np.float32)
+	j = 0
+	for i in range (0, wV):
+		out[0][j] = vHist[0][i]
+		j+=1
+	for i in range(0, wH):
+		out[0][j] = hHist[0][i]
+		j+=1
+	for x in range(0, hL):
+		for y in range(0, wL):
+			out[0][j] = float(lowData[x][y])
+			j+=1
+	print "out" + str(out)
+	return out
 
 #Aproximated aspect for characters on the plate will be 1.0, we will use 35 percent error margin
 def verifySizes(contour):
