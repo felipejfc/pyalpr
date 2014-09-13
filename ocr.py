@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import json
 
 class Char:
 	def __init__(self, img, x):
@@ -20,15 +21,39 @@ def projectHistogram(img, orientation):
 #	print mHist
 	return mHist
 
-def train:
+class NumpyAwareJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray) and obj.ndim == 1:
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+def train():
+	#Chars que desejamos treinar
 	chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 
      		 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
 			 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+	#Numero de imagens de treinamento que temos para cada char
+	numTrainChars = [4 , 6 , 7 , 7 , 6 , 7 , 7 , 6 , 4 , 7 , 1 , 1 , 3 , 
+					 1 , 1 , 5 , 3 , 3 , 1 , 3 , 5 , 2 , 3 , 4 , 4 , 3 , 
+					 4 , 1 , 3 , 2 , 3 , 1 , 1 , 1 , 2 , 1]
+	trainDataF10 =   []
+	trainDataF15 =   []
+	trainDataF20 =   []
+	trainingLabels = []
+	for i in range(0, len(chars)):
+		for j in range(1, numTrainChars[i]+1):
+			img = cv2.imread("train/"+chars[i]+"_"+str(j)+".jpg",0)
+			#print("train/"+chars[i]+"_"+str(j)+".jpg"+"\n"+str(img))
+			f10 = features(img,(10,10))
+			f15 = features(img,(15,15))
+			f20 = features(img,(20,20))
 
-	numTrainChars = [1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 
-					 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 
-					 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1 , 1]
-
+			trainDataF10.append(f10)
+			trainDataF15.append(f15)
+			trainDataF20.append(f20)
+			trainingLabels.append(i)
+	with open('OCR.json', 'w') as outfile:
+		json.dump({'f10':trainDataF10, 'f15':trainDataF15, 'f20': trainDataF20, 'labels':trainingLabels}, outfile,cls=NumpyAwareJSONEncoder)
 
 def features(img, sizeData):
 	VERTICAL  = 0
@@ -37,22 +62,23 @@ def features(img, sizeData):
 	hHist = projectHistogram(img, HORIZONAL)
 	hV,wV = vHist.shape[:2]
 	hH,wH = hHist.shape[:2]
-	lowData = cv2.resize(img, (sizeData))
+	lowData = cv2.resize(img, sizeData)
+	#print(lowData)
 	hL,wL = lowData.shape[:2]
 	numCols=wV+wH+wL*wL;
-	out = np.zeros((1,numCols), np.float32)
+	out = np.zeros((numCols), np.float32)
 	j = 0
 	for i in range (0, wV):
-		out[0][j] = vHist[0][i]
+		out[j] = vHist[0][i]
 		j+=1
 	for i in range(0, wH):
-		out[0][j] = hHist[0][i]
+		out[j] = hHist[0][i]
 		j+=1
 	for x in range(0, hL):
 		for y in range(0, wL):
-			out[0][j] = float(lowData[x][y])
+			out[j] = float(lowData[x][y])
 			j+=1
-	print "out" + str(out)
+	#print "out" + str(out)
 	return out
 
 #Aproximated aspect for characters on the plate will be 1.0, we will use 35 percent error margin
