@@ -1,11 +1,16 @@
 import cv2
 import numpy as np
 import json
+from cv2 import ANN_MLP
 
 class Char:
 	def __init__(self, img, x):
 		self.img = img
 		self.x = x
+
+chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 
+ 		 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
+		 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 def projectHistogram(img, orientation):
 	h,w = img.shape[:2]
@@ -27,12 +32,80 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
-def train():
+def train(trainData, classes, nLayers, nOutLayers):
+	layers = np.array([len(trainData[0]), nLayers, nOutLayers])
+	ann = ANN_MLP(layers, cv2.ANN_MLP_SIGMOID_SYM,1,1)
+
+	inputs = np.empty((len(trainData), len(trainData[0])), 'float' )
+
+	for i in range(len(trainData)):
+	    a = np.array(list(trainData[i]))
+	    inputs[i,:] = a[:]
+
+	#outputs
+	outputs = np.zeros((len(trainData),36))
+	for i in range(len(trainData)):
+		outputs[i][classes[i]] = 1
+
+	# Some parameters for learning.  Step size is the gradient step size
+	# for backpropogation.
+	step_size = 0.01
+	# Momentum can be ignored for this example.
+	momentum = 0.0
+	# Max steps of training
+	nsteps = 10000
+	# Error threshold for halting training
+	max_err = 0.0001
+	# When to stop: whichever comes first, count or error
+	condition = cv2.TERM_CRITERIA_COUNT | cv2.TERM_CRITERIA_EPS
+	# Tuple of termination criteria: first condition, then # steps, then
+	# error tolerance second and third things are ignored if not implied
+	# by condition
+	criteria = (condition, nsteps, max_err)
+
+	# params is a dictionary with relevant things for NNet training.
+	params = dict( term_crit = criteria, 
+	               train_method = cv2.ANN_MLP_TRAIN_PARAMS_BACKPROP, 
+	               bp_dw_scale = step_size, 
+	               bp_moment_scale = momentum )
+
+	# Train our network
+	num_iter = ann.train(inputs, outputs, None, params=params)
+
+
+	# Create a matrix of predictions
+	#predictions = np.empty_like(outputs)
+
+	# See how the network did.
+	#ann.predict(inputs, predictions)
+
+	# Compute sum of squared errors
+	#sse = np.sum( (outputs - predictions)**2 )
+
+	# Compute # correct
+	#true_labels = np.argmax( outputs, axis=0 )
+	#pred_labels = np.argmax( predictions, axis=0 )
+	#num_correct = np.sum( true_labels == pred_labels )
+
+	#print 'predictions:'
+	#print predictions
+	#print 'sum sq. err:', sse
+	#print 'accuracy:', float(num_correct)/len(true_labels)
+
+	return ann
+
+def classify(features, ann):
+	a = np.array(list(features))
+	inputs = np.empty((1, len(features)), 'float' )
+	inputs[0,:] = a[:]
+
+	predictions = np.zeros((1,36))
+	ann.predict(inputs, predictions)
+	minV, maxV, minL, maxL = cv2.minMaxLoc(predictions);
+	return chars[maxL[0]]
+
+def generateTrainData():
 	#Chars que desejamos treinar
-	chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 
-     		 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-			 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-	#Numero de imagens de treinamento que temos para cada char
 	numTrainChars = [4 , 6 , 7 , 7 , 6 , 7 , 7 , 6 , 4 , 7 , 1 , 1 , 3 , 
 					 1 , 1 , 5 , 3 , 3 , 1 , 3 , 5 , 2 , 3 , 4 , 4 , 3 , 
 					 4 , 1 , 3 , 2 , 3 , 1 , 1 , 1 , 2 , 1]
@@ -43,7 +116,6 @@ def train():
 	for i in range(0, len(chars)):
 		for j in range(1, numTrainChars[i]+1):
 			img = cv2.imread("train/"+chars[i]+"_"+str(j)+".jpg",0)
-			#print("train/"+chars[i]+"_"+str(j)+".jpg"+"\n"+str(img))
 			f10 = features(img,(10,10))
 			f15 = features(img,(15,15))
 			f20 = features(img,(20,20))
@@ -53,20 +125,20 @@ def train():
 			trainDataF20.append(f20)
 			trainingLabels.append(i)
 	with open('OCR.json', 'w') as outfile:
-		json.dump({'f10':trainDataF10, 'f15':trainDataF15, 'f20': trainDataF20, 'labels':trainingLabels}, outfile,cls=NumpyAwareJSONEncoder)
+		json.dump({'trainDataF10':trainDataF10, 'trainDataF15':trainDataF15, 'trainDataF20': trainDataF20, 'labels':trainingLabels}, outfile,cls=NumpyAwareJSONEncoder)
 
 def features(img, sizeData):
 	VERTICAL  = 0
 	HORIZONAL = 1
-	vHist = projectHistogram(img, VERTICAL)
-	hHist = projectHistogram(img, HORIZONAL)
+	lowData = cv2.resize(img, sizeData)
+	vHist = projectHistogram(lowData, VERTICAL)
+	hHist = projectHistogram(lowData, HORIZONAL)
 	hV,wV = vHist.shape[:2]
 	hH,wH = hHist.shape[:2]
-	lowData = cv2.resize(img, sizeData)
 	#print(lowData)
 	hL,wL = lowData.shape[:2]
 	numCols=wV+wH+wL*wL;
-	out = np.zeros((numCols), np.float32)
+	out = np.zeros((numCols), 'float')
 	j = 0
 	for i in range (0, wV):
 		out[j] = vHist[0][i]
@@ -121,7 +193,7 @@ def segment(plate):
 	result = plateThreshold[1].copy()
 	result = cv2.cvtColor(result, cv2.COLOR_GRAY2RGB);
 	cv2.drawContours(result, contours[0], -1, (255,0,0),1)
-	cv2.imshow('THRESH_BINARY_INV + findContours', result)
+	#cv2.imshow('THRESH_BINARY_INV + findContours', result)
 	for contour in contours[0]:
 		mr = cv2.boundingRect(contour)
 		cv2.rectangle(result, (mr[0],mr[1]),(mr[0]+mr[2],mr[1]+mr[3]), (0,255,0))
@@ -130,5 +202,5 @@ def segment(plate):
 			processedChar = preprocess(crop)
 			output.append(Char(processedChar,mr[0]))
 			cv2.rectangle(result, (mr[0],mr[1]),(mr[0]+mr[2],mr[1]+mr[3]), (0,125,255));
-	cv2.imshow('result', result)
+	#cv2.imshow('result', result)
 	return output
