@@ -12,6 +12,7 @@ chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C',
  		 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
 		 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
+#Project the histogram of the input img
 def projectHistogram(img, orientation):
 	h,w = img.shape[:2]
 	sz = h if orientation==1 else w
@@ -23,7 +24,6 @@ def projectHistogram(img, orientation):
 	minVal,maxVal,minLoc, maxLoc = cv2.minMaxLoc(mHist)
 	if maxVal > 0:
 		mHist *= 1.0/maxVal
-#	print mHist
 	return mHist
 
 class NumpyAwareJSONEncoder(json.JSONEncoder):
@@ -32,6 +32,7 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
+#Train a MPL neural network to recognize chars
 def train(trainData, classes, nLayers, nOutLayers):
 	layers = np.array([len(trainData[0]), nLayers, nOutLayers])
 	ann = ANN_MLP(layers, cv2.ANN_MLP_SIGMOID_SYM,1,1)
@@ -74,26 +75,27 @@ def train(trainData, classes, nLayers, nOutLayers):
 
 
 	# Create a matrix of predictions
-	#predictions = np.empty_like(outputs)
+#	predictions = np.empty_like(outputs)
 
 	# See how the network did.
-	#ann.predict(inputs, predictions)
+#	ann.predict(inputs, predictions)
 
 	# Compute sum of squared errors
-	#sse = np.sum( (outputs - predictions)**2 )
+#	sse = np.sum( (outputs - predictions)**2 )
 
 	# Compute # correct
-	#true_labels = np.argmax( outputs, axis=0 )
-	#pred_labels = np.argmax( predictions, axis=0 )
-	#num_correct = np.sum( true_labels == pred_labels )
+#	true_labels = np.argmax( outputs, axis=0 )
+#	pred_labels = np.argmax( predictions, axis=0 )
+#	num_correct = np.sum( true_labels == pred_labels )
 
-	#print 'predictions:'
-	#print predictions
-	#print 'sum sq. err:', sse
-	#print 'accuracy:', float(num_correct)/len(true_labels)
+#	print 'predictions:'
+#	print predictions
+#	print 'sum sq. err:', sse
+#	print 'accuracy:', float(num_correct)/len(true_labels)
 
 	return ann
 
+#Classify the input char
 def classify(features, ann):
 	a = np.array(list(features))
 	inputs = np.empty((1, len(features)), 'float' )
@@ -104,18 +106,19 @@ def classify(features, ann):
 	minV, maxV, minL, maxL = cv2.minMaxLoc(predictions);
 	return chars[maxL[0]]
 
+#Generate the OCR.json train data file
 def generateTrainData():
-	#Chars que desejamos treinar
-	numTrainChars = [4 , 6 , 7 , 7 , 6 , 7 , 7 , 6 , 4 , 7 , 1 , 1 , 3 , 
-					 1 , 1 , 5 , 3 , 3 , 1 , 3 , 5 , 2 , 3 , 4 , 4 , 3 , 
-					 4 , 1 , 3 , 2 , 3 , 1 , 1 , 1 , 2 , 1]
+	#Chars that we wish to train
+	numTrainChars = [6 , 8 , 9 , 9 , 6 , 9 , 8 , 8 , 6 , 9 , 4 , 4 , 5 , 
+					 3 , 3 , 7 , 5 , 5 , 3 , 5 , 7 , 4 , 5 , 6 , 6 , 5 , 
+					 6 , 3 , 5 , 4 , 5 , 3 , 3 , 3 , 4 , 3]
 	trainDataF10 =   []
 	trainDataF15 =   []
 	trainDataF20 =   []
 	trainingLabels = []
 	for i in range(0, len(chars)):
 		for j in range(1, numTrainChars[i]+1):
-			img = cv2.imread("train/"+chars[i]+"_"+str(j)+".jpg",0)
+			img = cv2.imread("resources/samples/"+chars[i]+"_"+str(j)+".jpg",0)
 			f10 = features(img,(10,10))
 			f15 = features(img,(15,15))
 			f20 = features(img,(20,20))
@@ -127,6 +130,7 @@ def generateTrainData():
 	with open('OCR.json', 'w') as outfile:
 		json.dump({'trainDataF10':trainDataF10, 'trainDataF15':trainDataF15, 'trainDataF20': trainDataF20, 'labels':trainingLabels}, outfile,cls=NumpyAwareJSONEncoder)
 
+#Create an array containing the projection of vertical and horizontal histogram of the char image and its binary data
 def features(img, sizeData):
 	VERTICAL  = 0
 	HORIZONAL = 1
@@ -163,13 +167,14 @@ def verifySizes(contour):
 
 	minHeight = 12
 	maxHeight = 27
-	#aspect para o numero 1 eh aprox. 0.2
+	#aspect for number 1 is aprox. 0.2
 	minAspect = 0.2
 	maxAspect = aspect+aspect*error
 	area = cv2.contourArea(contour)
 	#print "Area: " + str(area) + " Char aspect: " + str(charAspect) + " Char Height: "+ str(h) 
 	return charAspect < maxAspect and charAspect > minAspect and h < maxHeight and h > minHeight
 
+#Preprocess the char to normalize the test data
 def preprocess(char):
 	a,char = cv2.threshold(char, 60, 255, cv2.THRESH_BINARY_INV)
 	h,w = char.shape[:2]
@@ -180,13 +185,13 @@ def preprocess(char):
 	transf[1][2] = m/2.0 - h/2.0
 	warpImage = np.zeros((m,m),np.uint8)
 	warpImage=cv2.warpAffine(char, transf, (m,m), warpImage, cv2.INTER_LINEAR, cv2.BORDER_CONSTANT, (0) );
-	#cv2.imshow('cha '+str(charN), warpImage)
 	return warpImage
 
-def segment(plate):
+#Find the chars in the plate image
+def segment(plate, DEBUG):
 	charN = 0
 	output = []
-	#Threshold + findContours + iterar neles para deletar invalidos
+	#Threshold + findContours + iterar to delete invalid
 	plateThreshold = cv2.threshold(plate, 60, 255, cv2.THRESH_BINARY_INV)
 	plateContours  = plateThreshold[1].copy();
 	contours = cv2.findContours(plateContours, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -202,5 +207,7 @@ def segment(plate):
 			processedChar = preprocess(crop)
 			output.append(Char(processedChar,mr[0]))
 			cv2.rectangle(result, (mr[0],mr[1]),(mr[0]+mr[2],mr[1]+mr[3]), (0,125,255));
-	#cv2.imshow('result', result)
+	if DEBUG:
+		cv2.imshow('detected chars', result)
+
 	return output
