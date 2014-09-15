@@ -17,8 +17,28 @@ parser.add_argument('--show-steps', action='store_true', help='show the steps to
 parser.add_argument('--save-output', action='store_true', help='save the output results',
 					default = False)
 
-
 args = parser.parse_args()
+
+#Prevent numbers from being classified as letters and vice-versa
+def adjustCharBasedOnItsPosition(ch, x):
+	if ch == '0' and x <= 2:
+		return 'O'
+	elif ch == '1' and x <= 2:
+		return 'I'
+	elif ch == '2' and x <= 2:
+		return 'Z'
+	elif ch == '5' and x <= 2:
+		return 'S'
+	elif (ch == 'O' or ch == 'Q') and x > 2:
+		return '0'
+	elif ch == 'I' and x > 2:
+		return '1'
+	elif ch == 'Z' and x > 2:
+		return '2'
+	elif ch == 'S' and x > 2:
+		return '5'
+	else:
+		return ch
 
 def main():
 	DEBUG = True if args.show_steps else False 
@@ -47,8 +67,10 @@ def main():
 				chars = ocr.segment(plate,DEBUG)
 				chars = sorted(chars,key=lambda char: char.x)
 				res = ""
-				for char in chars:
-					res = res+ocr.classify(ocr.features(char.img,(15,15)), ann)
+				for i in range(0,len(chars)):
+					ch = ocr.classify(ocr.features(chars[i].img,(15,15)), ann)
+					ch = adjustCharBasedOnItsPosition(ch, i)
+					res = res+ ch
 				print(res[0:3]+"-"+res[3:7])
 			if DEBUG:
 				cv2.waitKey(0)
